@@ -14,9 +14,10 @@ We will implement a mechanism to mark incomplete version installation directorie
 
 Here is how the install process will work:
 
-1. Instead of creating a directory named `$ASDF_DATA_DIR/installs/<tool>/<version>` at the start of the install process we will create a directory named `$ASDF_DATA_DIR/temp/<tool>-<version>`, then inside it create an empty `.incomplete` marker file. This directory will then be renamed to `$ASDF_DATA_DIR/installs/<tool>/<version>`. Doing this ensures that the directory always starts with a `.incomplete` file in it. If the installation gets interrupted before the `.incomplete` marker file is created it would only exist in the temp directory and would never have been moved.
-2. The plugin's `install` callback is invoked as before. If the callback runs successfully the installation process continues. If it fails the installation directory is removed.
-3. When the installation is finished asdf removes the `.incomplete` marker file.
+1. Before beginning an installation asdf will check if the installation directory already exists with a `.incomplete` marker file. If it does, the directory is removed to clean up any stale incomplete installations.
+2. Instead of creating a directory named `$ASDF_DATA_DIR/installs/<tool>/<version>` at the start of the install process we will create a directory named `$ASDF_DATA_DIR/temp/<tool>-<version>`, then inside it create an empty `.incomplete` marker file. This directory will then be renamed to `$ASDF_DATA_DIR/installs/<tool>/<version>`. Doing this ensures that the directory always starts with a `.incomplete` file in it. If the installation gets interrupted before the `.incomplete` marker file is created it would only exist in the temp directory and would never have been moved.
+3. The plugin's download and install callbacks are invoked, along with any pre-download and pre-install hooks. If the install callback fails the installation directory is removed.
+4. When the installation is finished asdf removes the `.incomplete` marker file.
 
 Additionally, signal handlers will be registered for `SIGINT` and `SIGTERM` before installation that will trigger removal of the install directory.
 
