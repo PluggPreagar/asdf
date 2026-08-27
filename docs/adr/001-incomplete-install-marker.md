@@ -1,4 +1,4 @@
-# ADR 001: Use directory copy with file market to signal incomplete installs
+# ADR 001: Use directory copy with file marker to signal incomplete installs
 
 ## Status
 
@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-Due to the initial implementation of asdf all plugin versions must be installed into a subdirectory inside the asdf installs directory. When an installation is terminated due by `SIGTERM`, `SIGKILL`, a dropped network connection, or loss of power, the installation directory persists, even though the installation itself was interrupted and is likely in an incomplete or broken state. When a user later runs commands that check for installed versions asdf incorrectly treats these incomplete installations as installed. This happens because asdf considers every directory inside of `$ASDF_DATA_DIR/installs` as a valid installation. This leads to confusing behavior and errors the user may be unable to trace back to the root cause.
+Due to the initial implementation of asdf all plugin versions must be installed into a subdirectory inside the asdf installs directory. When an installation is terminated by `SIGTERM`, `SIGKILL`, a dropped network connection, or loss of power, the installation directory persists, even though the installation itself was interrupted and is likely in an incomplete or broken state. When a user later runs commands that check for installed versions asdf incorrectly treats these incomplete installations as installed. This happens because asdf considers every directory inside of `$ASDF_DATA_DIR/installs` as a valid installation. This leads to confusing behavior and errors the user may be unable to trace back to the root cause.
 
 ## Decision
 
@@ -14,13 +14,13 @@ We will implement a mechanism to mark incomplete version installation directorie
 
 Here is how the install process will work:
 
-1. Instead of creating a directory named `$ASDF_DATA_DIR/installs/<tool>/<version>` at the install of the install process we will create a directory named `$ASDF_DATA_DIR/temp/<tool>-<version>`, then inside it create an empty `.incomplete` marker file. This directory will then be renamed to `$ASDF_DATA_DIR/installs/<tool>/<version>`. Doing this ensures that the directory always starts with a `.incomplete` file in it. If the installation gets interrupted before the `.incomplete` marker file is created it would only exist in the temp directory and would never have been moved.
-2. The plugin's `install` callback is invoked as before. If the callback runs is successfully the installation process continues. If it fails the installation directory is removed.
+1. Instead of creating a directory named `$ASDF_DATA_DIR/installs/<tool>/<version>` at the start of the install process we will create a directory named `$ASDF_DATA_DIR/temp/<tool>-<version>`, then inside it create an empty `.incomplete` marker file. This directory will then be renamed to `$ASDF_DATA_DIR/installs/<tool>/<version>`. Doing this ensures that the directory always starts with a `.incomplete` file in it. If the installation gets interrupted before the `.incomplete` marker file is created it would only exist in the temp directory and would never have been moved.
+2. The plugin's `install` callback is invoked as before. If the callback runs successfully the installation process continues. If it fails the installation directory is removed.
 3. When the installation is finished asdf removes the `.incomplete` marker file.
 
 Additionally, a signal handlers will be registered for `SIGINT` and `SIGTERM` before installation that will trigger removal of the install directory.
 
-Commands that list installed versions or check for an installed version do this by reading directories. Now there will be an additional check for the `.incomplete` fileinside of each directory.
+Commands that list installed versions or check for an installed version do this by reading directories. Now there will be an additional check for the `.incomplete` file inside of each directory.
 
 ## Consequences
 
