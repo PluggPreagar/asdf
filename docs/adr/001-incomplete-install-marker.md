@@ -18,7 +18,7 @@ Here is how the install process will work:
 2. The plugin's `install` callback is invoked as before. If the callback runs successfully the installation process continues. If it fails the installation directory is removed.
 3. When the installation is finished asdf removes the `.incomplete` marker file.
 
-Additionally, a signal handlers will be registered for `SIGINT` and `SIGTERM` before installation that will trigger removal of the install directory.
+Additionally, signal handlers will be registered for `SIGINT` and `SIGTERM` before installation that will trigger removal of the install directory.
 
 Commands that list installed versions or check for an installed version do this by reading directories. Now there will be an additional check for the `.incomplete` file inside of each directory.
 
