@@ -160,7 +160,7 @@ func InstallOneVersion(conf config.Config, plugin plugins.Plugin, versionStr str
 	installDir := installs.InstallPath(conf, plugin, version)
 	err = cleanupStaleIncomplete(conf, installDir)
 	if err != nil {
-		fmt.Fprintf(stdErr, "warning: failed to cleanup stale incomplete install: %s\n", err)
+		return fmt.Errorf("failed to cleanup stale incomplete install: %w", err)
 	}
 
 	if installs.IsInstalled(conf, plugin, version) {
@@ -195,21 +195,26 @@ func InstallOneVersion(conf config.Config, plugin plugins.Plugin, versionStr str
 		return fmt.Errorf("failed to move temp dir to install location: %w", err)
 	}
 
+	// Set up signal handler to clean up on interrupt
 	sigChan := make(chan os.Signal, 1)
+	done := make(chan struct{})
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	cleanup := func() {
-		os.RemoveAll(installDir)
-		os.RemoveAll(tempDir)
-	}
-
 	go func() {
-		<-sigChan
-		cleanup()
-		os.Exit(1)
+		select {
+		case <-sigChan:
+			os.RemoveAll(installDir)
+			os.RemoveAll(tempDir)
+			os.Exit(1)
+		case <-done:
+			return
+		}
 	}()
 
-	defer signal.Stop(sigChan)
+	defer func() {
+		signal.Stop(sigChan)
+		close(done)
+	}()
 
 	concurrency, _ := conf.Concurrency()
 	env := map[string]string{
