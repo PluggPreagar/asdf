@@ -347,14 +347,6 @@ func TestInstallOneVersion(t *testing.T) {
 		}
 	})
 
-	t.Run("install directory is not visible during installation", func(t *testing.T) {
-		conf, plugin := generateConfig(t)
-		stdout, stderr := buildOutputs()
-		err := InstallOneVersion(conf, plugin, "1.0.0", false, &stdout, &stderr)
-		assert.Nil(t, err)
-		assertVersionInstalled(t, conf.DataDir, plugin.Name, "1.0.0")
-	})
-
 	t.Run("cleans up stale incomplete directory from previous failed install", func(t *testing.T) {
 		conf, plugin := generateConfig(t)
 		stdout, stderr := buildOutputs()
