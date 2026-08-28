@@ -34,6 +34,11 @@ func Installed(conf config.Config, plugin plugins.Plugin) (versions []string, er
 			continue
 		}
 
+		_, err := os.Stat(filepath.Join(installDirectory, file.Name(), IncompleteMarkerFilename))
+		if err == nil {
+			continue
+		}
+
 		versions = append(versions, toolversions.VersionStringFromFSFormat(file.Name()))
 	}
 
@@ -62,7 +67,11 @@ func DownloadPath(conf config.Config, plugin plugins.Plugin, version toolversion
 func IsInstalled(conf config.Config, plugin plugins.Plugin, version toolversions.Version) bool {
 	installDir := InstallPath(conf, plugin, version)
 
-	// Check if version already installed
 	_, err := os.Stat(installDir)
-	return !os.IsNotExist(err)
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	_, err = os.Stat(filepath.Join(installDir, IncompleteMarkerFilename))
+	return err != nil
 }

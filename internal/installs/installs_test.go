@@ -63,6 +63,34 @@ func TestInstalled(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, installedVersions, []string{"1.0.0"})
 	})
+
+	t.Run("filters out directories with .incomplete marker", func(t *testing.T) {
+		mockInstall(t, conf, plugin, "1.0.0")
+		mockInstall(t, conf, plugin, "2.0.0")
+		mockInstall(t, conf, plugin, "3.0.0")
+
+		version2 := toolversions.Version{Type: "version", Value: "2.0.0"}
+		installPath2 := InstallPath(conf, plugin, version2)
+		err := markIncomplete(installPath2)
+		assert.Nil(t, err)
+
+		installedVersions, err := Installed(conf, plugin)
+		assert.Nil(t, err)
+		assert.Equal(t, 2, len(installedVersions))
+		assert.Contains(t, installedVersions, "1.0.0")
+		assert.Contains(t, installedVersions, "3.0.0")
+		assert.NotContains(t, installedVersions, "2.0.0")
+	})
+
+	t.Run("returns all versions when none have .incomplete marker", func(t *testing.T) {
+		conf2, plugin2 := generateConfig(t)
+		mockInstall(t, conf2, plugin2, "1.0.0")
+		mockInstall(t, conf2, plugin2, "2.0.0")
+
+		installedVersions, err := Installed(conf2, plugin2)
+		assert.Nil(t, err)
+		assert.Equal(t, 2, len(installedVersions))
+	})
 }
 
 func TestIsInstalled(t *testing.T) {
@@ -75,6 +103,24 @@ func TestIsInstalled(t *testing.T) {
 	})
 	t.Run("returns true when installed", func(t *testing.T) {
 		version := toolversions.Version{Type: "version", Value: "1.0.0"}
+		assert.True(t, IsInstalled(conf, plugin, version))
+	})
+
+	t.Run("returns false when directory exists but has .incomplete marker", func(t *testing.T) {
+		version := toolversions.Version{Type: "version", Value: "2.0.0"}
+		mockInstall(t, conf, plugin, "2.0.0")
+
+		installPath := InstallPath(conf, plugin, version)
+		err := markIncomplete(installPath)
+		assert.Nil(t, err)
+
+		assert.False(t, IsInstalled(conf, plugin, version))
+	})
+
+	t.Run("returns true when directory exists without .incomplete marker", func(t *testing.T) {
+		version := toolversions.Version{Type: "version", Value: "3.0.0"}
+		mockInstall(t, conf, plugin, "3.0.0")
+
 		assert.True(t, IsInstalled(conf, plugin, version))
 	})
 }
@@ -105,4 +151,14 @@ func installVersion(t *testing.T, conf config.Config, plugin plugins.Plugin, ver
 	t.Helper()
 	err := installtest.InstallOneVersion(conf, plugin, "version", version)
 	assert.Nil(t, err)
+}
+
+func markIncomplete(installPath string) error {
+	markerPath := filepath.Join(installPath, IncompleteMarkerFilename)
+	file, err := os.Create(markerPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	return nil
 }
