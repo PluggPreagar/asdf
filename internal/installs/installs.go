@@ -14,6 +14,9 @@ import (
 	"github.com/asdf-vm/asdf/internal/toolversions"
 )
 
+// IncompleteMarkerFilename is the name of the marker file used to indicate an incomplete installation
+const IncompleteMarkerFilename = ".incomplete"
+
 // Installed returns a slice of all installed versions for a given plugin
 func Installed(conf config.Config, plugin plugins.Plugin) (versions []string, err error) {
 	installDirectory := data.InstallDirectory(conf.DataDir, plugin.Name)
