@@ -168,7 +168,7 @@ func InstallOneVersion(conf config.Config, plugin plugins.Plugin, versionStr str
 		return VersionAlreadyInstalledError{version: version, toolName: plugin.Name}
 	}
 
-	tempDir := filepath.Join(conf.DataDir, "temp", "install", fmt.Sprintf("%s-%s", plugin.Name, version))
+	tempDir := filepath.Join(conf.DataDir, "temp", fmt.Sprintf("%s-%s", plugin.Name, version))
 	downloadDir := installs.DownloadPath(conf, plugin, version)
 
 	err = os.MkdirAll(tempDir, 0o777)
