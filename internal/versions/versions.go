@@ -23,12 +23,11 @@ import (
 )
 
 const (
-	incompleteMarkerFilename = ".incomplete"
-	systemVersion            = "system"
-	latestVersion            = "latest"
-	latestFilterRegex        = "(?i)(^Available versions:|-src|-dev|-latest|-stm|[-\\.]rc|-milestone|-alpha|-beta|[-\\.]pre|-next|(a|b|c)[0-9]+|snapshot|master|main)"
-	numericStartFilterRegex  = "^\\s*[0-9]"
-	noLatestVersionErrMsg    = "no latest version found"
+	systemVersion           = "system"
+	latestVersion           = "latest"
+	latestFilterRegex       = "(?i)(^Available versions:|-src|-dev|-latest|-stm|[-\\.]rc|-milestone|-alpha|-beta|[-\\.]pre|-next|(a|b|c)[0-9]+|snapshot|master|main)"
+	numericStartFilterRegex = "^\\s*[0-9]"
+	noLatestVersionErrMsg   = "no latest version found"
 )
 
 // UninstallableVersionError is an error returned if someone tries to install the
@@ -424,7 +423,7 @@ func parseVersions(rawVersions string) []string {
 
 // markComplete removes the .incomplete marker file from the given directory
 func markComplete(installPath string) error {
-	markerPath := filepath.Join(installPath, incompleteMarkerFilename)
+	markerPath := filepath.Join(installPath, installs.IncompleteMarkerFilename)
 	err := os.Remove(markerPath)
 	if err != nil {
 		return fmt.Errorf("failed to remove incomplete marker: %w", err)
@@ -434,7 +433,7 @@ func markComplete(installPath string) error {
 
 // markIncomplete creates a .incomplete marker file in the given directory
 func markIncomplete(installPath string) error {
-	markerPath := filepath.Join(installPath, incompleteMarkerFilename)
+	markerPath := filepath.Join(installPath, installs.IncompleteMarkerFilename)
 	file, err := os.Create(markerPath)
 	if err != nil {
 		return fmt.Errorf("failed to create incomplete marker: %w", err)
@@ -450,7 +449,7 @@ func cleanupStaleIncomplete(_ config.Config, installPath string) error {
 		return nil
 	}
 
-	markerPath := filepath.Join(installPath, incompleteMarkerFilename)
+	markerPath := filepath.Join(installPath, installs.IncompleteMarkerFilename)
 	_, err = os.Stat(markerPath)
 	if os.IsNotExist(err) {
 		return nil
