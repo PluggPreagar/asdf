@@ -651,14 +651,14 @@ func TestCleanupStaleIncomplete(t *testing.T) {
 	conf, plugin := generateConfig(t)
 
 	t.Run("removes directory when .incomplete marker exists", func(t *testing.T) {
-		version := toolversions.Version{Type: "version", Value: "5.0.0"}
-		mockInstall(t, conf, plugin, "5.0.0")
-		installPath := InstallPath(conf, plugin, version)
-
-		err := MarkIncomplete(installPath)
+		installPath := filepath.Join(conf.DataDir, "installs", plugin.Name, "5.0.0")
+		err := os.MkdirAll(installPath, 0o777)
 		assert.Nil(t, err)
 
-		err = CleanupStaleIncomplete(conf, plugin, version)
+		err = markIncomplete(installPath)
+		assert.Nil(t, err)
+
+		err = cleanupStaleIncomplete(conf, installPath)
 		assert.Nil(t, err)
 
 		_, err = os.Stat(installPath)
@@ -666,17 +666,17 @@ func TestCleanupStaleIncomplete(t *testing.T) {
 	})
 
 	t.Run("does nothing when directory does not exist", func(t *testing.T) {
-		version := toolversions.Version{Type: "version", Value: "6.0.0"}
-		err := CleanupStaleIncomplete(conf, plugin, version)
+		installPath := filepath.Join(conf.DataDir, "installs", plugin.Name, "6.0.0")
+		err := cleanupStaleIncomplete(conf, installPath)
 		assert.Nil(t, err)
 	})
 
 	t.Run("does nothing when directory exists without .incomplete marker", func(t *testing.T) {
-		version := toolversions.Version{Type: "version", Value: "7.0.0"}
-		mockInstall(t, conf, plugin, "7.0.0")
-		installPath := InstallPath(conf, plugin, version)
+		installPath := filepath.Join(conf.DataDir, "installs", plugin.Name, "7.0.0")
+		err := os.MkdirAll(installPath, 0o777)
+		assert.Nil(t, err)
 
-		err := CleanupStaleIncomplete(conf, plugin, version)
+		err = cleanupStaleIncomplete(conf, installPath)
 		assert.Nil(t, err)
 
 		_, err = os.Stat(installPath)
@@ -687,7 +687,7 @@ func TestCleanupStaleIncomplete(t *testing.T) {
 func TestMarkIncomplete(t *testing.T) {
 	t.Run("creates .incomplete marker file in directory", func(t *testing.T) {
 		dir := t.TempDir()
-		err := MarkIncomplete(dir)
+		err := markIncomplete(dir)
 		assert.Nil(t, err)
 
 		markerPath := filepath.Join(dir, ".incomplete")
@@ -697,7 +697,7 @@ func TestMarkIncomplete(t *testing.T) {
 
 	t.Run("returns error when directory does not exist", func(t *testing.T) {
 		dir := filepath.Join(t.TempDir(), "nonexistent")
-		err := MarkIncomplete(dir)
+		err := markIncomplete(dir)
 		assert.NotNil(t, err)
 	})
 }
@@ -706,10 +706,10 @@ func TestMarkComplete(t *testing.T) {
 	t.Run("removes .incomplete marker file from directory", func(t *testing.T) {
 		dir := t.TempDir()
 		markerPath := filepath.Join(dir, ".incomplete")
-		err := os.WriteFile(markerPath, []byte{}, 0644)
+		err := os.WriteFile(markerPath, []byte{}, 0o644)
 		assert.Nil(t, err)
 
-		err = MarkComplete(dir)
+		err = markComplete(dir)
 		assert.Nil(t, err)
 
 		_, err = os.Stat(markerPath)
@@ -718,7 +718,7 @@ func TestMarkComplete(t *testing.T) {
 
 	t.Run("returns error when marker file does not exist", func(t *testing.T) {
 		dir := t.TempDir()
-		err := MarkComplete(dir)
+		err := markComplete(dir)
 		assert.NotNil(t, err)
 	})
 }
