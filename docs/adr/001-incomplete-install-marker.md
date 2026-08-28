@@ -1,4 +1,4 @@
-# ADR 001: Use directory copy with file marker to signal incomplete installs
+# ADR 001: Use atomic directory rename with marker file to signal incomplete installs
 
 ## Status
 
