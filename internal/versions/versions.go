@@ -168,7 +168,7 @@ func InstallOneVersion(conf config.Config, plugin plugins.Plugin, versionStr str
 		return VersionAlreadyInstalledError{version: version, toolName: plugin.Name}
 	}
 
-	tempDir := filepath.Join(conf.DataDir, "temp", fmt.Sprintf("%s-%s", plugin.Name, version))
+	tempDir := filepath.Join(conf.DataDir, "temp", fmt.Sprintf("%s-%s", plugin.Name, toolversions.FormatForFS(version)))
 	downloadDir := installs.DownloadPath(conf, plugin, version)
 
 	err = os.MkdirAll(tempDir, 0o777)
@@ -444,7 +444,7 @@ func markIncomplete(installPath string) error {
 }
 
 // cleanupStaleIncomplete removes an install directory if it has a .incomplete marker
-func cleanupStaleIncomplete(conf config.Config, installPath string) error {
+func cleanupStaleIncomplete(_ config.Config, installPath string) error {
 	_, err := os.Stat(installPath)
 	if os.IsNotExist(err) {
 		return nil
