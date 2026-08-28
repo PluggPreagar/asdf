@@ -339,14 +339,10 @@ func TestInstallOneVersion(t *testing.T) {
 		err := InstallOneVersion(conf, plugin, "1.0.0", false, &stdout, &stderr)
 		assert.Nil(t, err)
 
-		tempDir := filepath.Join(conf.DataDir, "temp", "install")
-		entries, err := os.ReadDir(tempDir)
-		if !os.IsNotExist(err) {
-			assert.Nil(t, err)
-			assert.Empty(t, entries, "temp install directory should be empty after successful install")
-		}
+		tempPath := filepath.Join(conf.DataDir, "temp", plugin.Name+"-1.0.0")
+		_, err = os.Stat(tempPath)
+		assert.True(t, os.IsNotExist(err), "temp directory should be cleaned up after successful install")
 	})
-
 	t.Run("cleans up stale incomplete directory from previous failed install", func(t *testing.T) {
 		conf, plugin := generateConfig(t)
 		stdout, stderr := buildOutputs()
